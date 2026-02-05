@@ -14,6 +14,7 @@ let state = {
     countdownTimer: null,
     nextCheckInTime: null,
     currentPeriodStart: null,
+    currentPeriodEnd: null,
     deepgramConnection: null,
     isRecording: false,
     currentTranscript: ''
@@ -114,18 +115,19 @@ function setupEventListeners() {
 }
 
 // Timer Functions
-function startTimer() {
+function startTimer(startTime) {
     stopTimer(); // Clear any existing timer
     
-    state.currentPeriodStart = new Date();
-    state.nextCheckInTime = new Date(Date.now() + state.interval * 60 * 1000);
+    state.currentPeriodStart = startTime || new Date();
+    state.nextCheckInTime = new Date(state.currentPeriodStart.getTime() + state.interval * 60 * 1000);
     
     // Update countdown every second
     updateCountdown();
     state.countdownTimer = setInterval(updateCountdown, 1000);
     
     // Set timer for check-in
-    state.timer = setTimeout(triggerCheckIn, state.interval * 60 * 1000);
+    const remainingMs = state.nextCheckInTime.getTime() - Date.now();
+    state.timer = setTimeout(triggerCheckIn, Math.max(0, remainingMs));
 }
 
 function stopTimer() {
@@ -220,11 +222,11 @@ function updateApiKeyDisplay() {
 }
 
 function showRecordingModal() {
-    const periodEnd = new Date();
-    const periodStart = state.currentPeriodStart || new Date(Date.now() - state.interval * 60 * 1000);
+    state.currentPeriodEnd = new Date();
+    const periodStart = state.currentPeriodStart || new Date(state.currentPeriodEnd.getTime() - state.interval * 60 * 1000);
     
     elements.periodStart.textContent = formatTime(periodStart);
-    elements.periodEnd.textContent = formatTime(periodEnd);
+    elements.periodEnd.textContent = formatTime(state.currentPeriodEnd);
     
     elements.liveTranscript.textContent = '';
     state.currentTranscript = '';
@@ -247,7 +249,7 @@ function hideRecordingModal() {
 
 function cancelRecording() {
     hideRecordingModal();
-    startTimer(); // Restart the timer
+    startTimer(state.currentPeriodEnd); // Restart the timer from where we left off
 }
 
 // Recording Functions
@@ -378,8 +380,8 @@ function saveTranscriptEntry() {
         return;
     }
     
-    const periodEnd = new Date();
-    const periodStart = state.currentPeriodStart || new Date(Date.now() - state.interval * 60 * 1000);
+    const periodEnd = state.currentPeriodEnd || new Date();
+    const periodStart = state.currentPeriodStart || new Date(periodEnd.getTime() - state.interval * 60 * 1000);
     
     const entry = {
         id: generateId(),
@@ -393,7 +395,7 @@ function saveTranscriptEntry() {
     saveToStorage();
     renderTranscripts();
     hideRecordingModal();
-    startTimer(); // Start new timer for next check-in
+    startTimer(state.currentPeriodEnd); // Start new timer from where we left off
 }
 
 // Transcript Display Functions
