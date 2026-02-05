@@ -2,7 +2,8 @@
 export const STORAGE_KEYS = {
     API_KEY: 'timeaudit_apikey',
     INTERVAL: 'timeaudit_interval',
-    ENTRIES: 'timeaudit_entries'
+    ENTRIES: 'timeaudit_entries',
+    NOTIFICATIONS_ENABLED: 'timeaudit_notifications'
 };
 
 // State
@@ -10,6 +11,7 @@ export let state = {
     apiKey: null,
     interval: 15,
     entries: [],
+    notificationsEnabled: false,
     timer: null,
     countdownTimer: null,
     nextCheckInTime: null,
@@ -30,6 +32,7 @@ const elements = {
     intervalSelect: document.getElementById('interval-select'),
     apiKeyDisplay: document.getElementById('api-key-display'),
     editApiKeyBtn: document.getElementById('edit-api-key-btn'),
+    notificationToggle: document.getElementById('notification-toggle'),
     countdownDisplay: document.getElementById('countdown-display'),
     
     // API Key Modal
@@ -53,10 +56,70 @@ const elements = {
     clearAllBtn: document.getElementById('clear-all-btn')
 };
 
+// Notification Functions
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('Browser does not support notifications');
+        return false;
+    }
+    
+    if (Notification.permission === 'granted') {
+        return true;
+    }
+    
+    if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+    
+    return false;
+}
+
+function showBrowserNotification() {
+    if (state.notificationsEnabled && Notification.permission === 'granted') {
+        try {
+            const notification = new Notification('⏰ Time Audit Check-in', {
+                body: 'What have you been working on?',
+                tag: 'timeaudit-checkin',
+                requireInteraction: true
+            });
+            
+            notification.onclick = () => {
+                window.focus();
+                notification.close();
+                showRecordingModal();
+            };
+        } catch (err) {
+            console.error('Error showing notification:', err);
+        }
+    }
+}
+
+async function handleNotificationToggle() {
+    if (elements.notificationToggle.checked) {
+        const granted = await requestNotificationPermission();
+        if (!granted) {
+            elements.notificationToggle.checked = false;
+            state.notificationsEnabled = false;
+            alert('Notification permission was denied. Please enable notifications in your browser settings to use this feature.');
+        } else {
+            state.notificationsEnabled = true;
+        }
+    } else {
+        state.notificationsEnabled = false;
+    }
+    saveToStorage();
+}
+
 // Initialize App
 function init() {
     loadFromStorage();
     setupEventListeners();
+    
+    // Sync toggle state
+    if (elements.notificationToggle) {
+        elements.notificationToggle.checked = state.notificationsEnabled;
+    }
     
     if (!state.apiKey) {
         showApiKeyModal();
@@ -84,6 +147,8 @@ function loadFromStorage() {
     } else {
         state.entries = [];
     }
+
+    state.notificationsEnabled = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'true';
     
     elements.intervalSelect.value = state.interval.toString();
 }
@@ -94,6 +159,7 @@ function saveToStorage() {
     }
     localStorage.setItem(STORAGE_KEYS.INTERVAL, state.interval.toString());
     localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(state.entries));
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, state.notificationsEnabled.toString());
 }
 
 // Event Listeners
@@ -101,6 +167,9 @@ function setupEventListeners() {
     // Settings
     elements.intervalSelect.addEventListener('change', handleIntervalChange);
     elements.editApiKeyBtn.addEventListener('click', showApiKeyModal);
+    if (elements.notificationToggle) {
+        elements.notificationToggle.addEventListener('change', handleNotificationToggle);
+    }
     
     // API Key Modal
     elements.saveApiKeyBtn.addEventListener('click', handleSaveApiKey);
@@ -176,6 +245,7 @@ function handleIntervalChange() {
 
 function triggerCheckIn() {
     playNotification();
+    showBrowserNotification();
     showRecordingModal();
 }
 
