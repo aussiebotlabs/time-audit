@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Audit - Test Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 0.5rem;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .summary-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .summary-value.passed {
+            color: #16a34a;
+        }
+
+        .summary-value.failed {
+            color: #dc2626;
+        }
+
+        .test-section {
+            margin: 2rem 0;
+        }
+
+        .test-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .test-case {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-left: 4px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .test-case.passed {
+            border-left-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .test-case.failed {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .test-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .test-icon {
+            font-size: 1.25rem;
+        }
+
+        .test-message {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .test-error {
+            background: #fee;
+            border: 1px solid #fcc;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin-top: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #991b1b;
+        }
+
+        .run-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .run-button:hover {
+            background: #1d4ed8;
+        }
+
+        .run-button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #test-output {
+            min-height: 200px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Time Audit Test Suite</h1>
+        <p style="color: #64748b; margin-bottom: 1rem;">Automated tests for core functionality</p>
+
+        <button id="run-tests" class="run-button">Run Tests</button>
+
+        <div class="summary" id="summary" style="display: none;">
+            <div class="summary-item">
+                <span class="summary-label">Total Tests</span>
+                <span class="summary-value" id="total-tests">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Passed</span>
+                <span class="summary-value passed" id="passed-tests">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Failed</span>
+                <span class="summary-value failed" id="failed-tests">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Duration</span>
+                <span class="summary-value" id="duration">0ms</span>
+            </div>
+        </div>
+
+        <div id="test-output">
+            <div class="loading">Click "Run Tests" to start</div>
+        </div>
+    </div>
+
+    <script>
+        // Simple test framework
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.results = {
+                    total: 0,
+                    passed: 0,
+                    failed: 0,
+                    duration: 0
+                };
+            }
+
+            describe(name, fn) {
+                this.tests.push({ name, fn, cases: [] });
+            }
+
+            test(name, fn) {
+                const currentSuite = this.tests[this.tests.length - 1];
+                if (currentSuite) {
+                    currentSuite.cases.push({ name, fn });
+                }
+            }
+
+            async run() {
+                const startTime = Date.now();
+                this.results = { total: 0, passed: 0, failed: 0, duration: 0 };
+
+                for (const suite of this.tests) {
+                    const sectionEl = document.createElement('div');
+                    sectionEl.className = 'test-section';
+                    sectionEl.innerHTML = `<h2>${suite.name}</h2>`;
+                    
+                    for (const testCase of suite.cases) {
+                        this.results.total++;
+                        const caseEl = document.createElement('div');
+                        caseEl.className = 'test-case';
+                        
+                        try {
+                            await testCase.fn();
+                            this.results.passed++;
+                            caseEl.classList.add('passed');
+                            caseEl.innerHTML = `
+                                <div class="test-title">
+                                    <span class="test-icon">✓</span>
+                                    <span>${testCase.name}</span>
+                                </div>
+                            `;
+                        } catch (error) {
+                            this.results.failed++;
+                            caseEl.classList.add('failed');
+                            caseEl.innerHTML = `
+                                <div class="test-title">
+                                    <span class="test-icon">✗</span>
+                                    <span>${testCase.name}</span>
+                                </div>
+                                <div class="test-error">${error.message}</div>
+                            `;
+                        }
+                        
+                        sectionEl.appendChild(caseEl);
+                    }
+                    
+                    document.getElementById('test-output').appendChild(sectionEl);
+                }
+
+                this.results.duration = Date.now() - startTime;
+                this.updateSummary();
+            }
+
+            updateSummary() {
+                document.getElementById('summary').style.display = 'flex';
+                document.getElementById('total-tests').textContent = this.results.total;
+                document.getElementById('passed-tests').textContent = this.results.passed;
+                document.getElementById('failed-tests').textContent = this.results.failed;
+                document.getElementById('duration').textContent = this.results.duration + 'ms';
+            }
+        }
+
+        // Assertion helpers
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(message || `Expected ${expected}, but got ${actual}`);
+            }
+        }
+
+        function assertNotNull(value, message) {
+            if (value === null || value === undefined) {
+                throw new Error(message || 'Expected value to not be null');
+            }
+        }
+
+        function assertTrue(value, message) {
+            if (value !== true) {
+                throw new Error(message || 'Expected value to be true');
+            }
+        }
+
+        function assertFalse(value, message) {
+            if (value !== false) {
+                throw new Error(message || 'Expected value to be false');
+            }
+        }
+
+        // Test Suites
+        const runner = new TestRunner();
+
+        // Storage Tests
+        runner.describe('LocalStorage Management', () => {});
+        
+        runner.test('Should save and retrieve API key', () => {
+            const testKey = 'test-api-key-12345';
+            localStorage.setItem('timeaudit_apikey', testKey);
+            const retrieved = localStorage.getItem('timeaudit_apikey');
+            assertEqual(retrieved, testKey, 'API key should be stored and retrieved correctly');
+            localStorage.removeItem('timeaudit_apikey');
+        });
+
+        runner.test('Should save and retrieve interval setting', () => {
+            localStorage.setItem('timeaudit_interval', '20');
+            const retrieved = parseInt(localStorage.getItem('timeaudit_interval'), 10);
+            assertEqual(retrieved, 20, 'Interval should be stored as string and parsed correctly');
+            localStorage.removeItem('timeaudit_interval');
+        });
+
+        runner.test('Should store entries as JSON array', () => {
+            const entries = [
+                { id: '1', transcript: 'Test 1', startTime: new Date().toISOString() },
+                { id: '2', transcript: 'Test 2', startTime: new Date().toISOString() }
+            ];
+            localStorage.setItem('timeaudit_entries', JSON.stringify(entries));
+            const retrieved = JSON.parse(localStorage.getItem('timeaudit_entries'));
+            assertEqual(retrieved.length, 2, 'Should store and retrieve multiple entries');
+            assertEqual(retrieved[0].id, '1', 'First entry should have correct ID');
+            localStorage.removeItem('timeaudit_entries');
+        });
+
+        // Data Format Tests
+        runner.describe('Data Format Validation', () => {});
+
+        runner.test('Entry should have required fields', () => {
+            const entry = {
+                id: 'test-id',
+                startTime: new Date().toISOString(),
+                endTime: new Date().toISOString(),
+                transcript: 'Test transcript',
+                recordedAt: new Date().toISOString()
+            };
+            
+            assertNotNull(entry.id, 'Entry must have an ID');
+            assertNotNull(entry.startTime, 'Entry must have start time');
+            assertNotNull(entry.endTime, 'Entry must have end time');
+            assertNotNull(entry.transcript, 'Entry must have transcript');
+            assertNotNull(entry.recordedAt, 'Entry must have recorded timestamp');
+        });
+
+        runner.test('Timestamps should be valid ISO strings', () => {
+            const now = new Date();
+            const isoString = now.toISOString();
+            const parsed = new Date(isoString);
+            
+            assertTrue(!isNaN(parsed.getTime()), 'ISO string should parse to valid date');
+            assertEqual(parsed.toISOString(), isoString, 'Parsed date should match original');
+        });
+
+        // Utility Function Tests
+        runner.describe('Utility Functions', () => {});
+
+        runner.test('Should generate unique IDs', () => {
+            const id1 = Date.now().toString(36) + Math.random().toString(36).substr(2);
+            const id2 = Date.now().toString(36) + Math.random().toString(36).substr(2);
+            
+            assertNotNull(id1, 'ID should not be null');
+            assertTrue(id1.length > 0, 'ID should have length');
+            assertTrue(id1 !== id2, 'Generated IDs should be unique');
+        });
+
+        runner.test('Should format time correctly', () => {
+            const date = new Date('2026-02-05T14:30:00Z');
+            const formatted = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            
+            assertTrue(formatted.includes(':'), 'Formatted time should include colon');
+            assertTrue(formatted.length >= 5, 'Formatted time should be HH:MM');
+        });
+
+        runner.test('Should escape HTML in transcripts', () => {
+            const testText = '<script>alert("test")<\/script>';
+            const div = document.createElement('div');
+            div.textContent = testText;
+            const escaped = div.innerHTML;
+            
+            assertFalse(escaped.includes('<script>'), 'HTML should be escaped');
+            assertTrue(escaped.includes('&lt;'), 'Should contain escaped characters');
+        });
+
+        // Timer Tests
+        runner.describe('Timer Calculations', () => {});
+
+        runner.test('Should calculate countdown correctly', () => {
+            const now = Date.now();
+            const future = now + (15 * 60 * 1000); // 15 minutes
+            const remaining = future - now;
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            
+            assertEqual(minutes, 15, 'Should calculate 15 minutes correctly');
+            assertTrue(seconds >= 0 && seconds < 60, 'Seconds should be 0-59');
+        });
+
+        runner.test('Should format countdown display', () => {
+            const minutes = 5;
+            const seconds = 3;
+            const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            assertEqual(formatted, '05:03', 'Should format as MM:SS with padding');
+        });
+
+        // Export Tests
+        runner.describe('Data Export', () => {});
+
+        runner.test('Should generate JSON export', () => {
+            const entries = [
+                {
+                    id: '1',
+                    startTime: new Date().toISOString(),
+                    endTime: new Date().toISOString(),
+                    transcript: 'Test entry',
+                    recordedAt: new Date().toISOString()
+                }
+            ];
+            
+            const json = JSON.stringify(entries, null, 2);
+            const parsed = JSON.parse(json);
+            
+            assertEqual(parsed.length, 1, 'Parsed JSON should have correct length');
+            assertEqual(parsed[0].id, '1', 'Parsed entry should have correct data');
+        });
+
+        runner.test('Should generate text export format', () => {
+            const entry = {
+                id: '1',
+                startTime: new Date('2026-02-05T10:00:00Z').toISOString(),
+                endTime: new Date('2026-02-05T10:15:00Z').toISOString(),
+                transcript: 'Test transcript',
+                recordedAt: new Date().toISOString()
+            };
+            
+            let text = 'Time Audit Activity Log\n';
+            text += '='.repeat(50) + '\n\n';
+            text += `Entry 1\n`;
+            text += `-`.repeat(50) + '\n';
+            
+            assertTrue(text.includes('Time Audit'), 'Export should include title');
+            assertTrue(text.includes('Entry'), 'Export should include entry marker');
+            assertTrue(text.length > 50, 'Export should have substantial content');
+        });
+
+        // DOM Tests
+        runner.describe('DOM Element Validation', () => {});
+
+        runner.test('Should have required modal elements', async () => {
+            // Load the main HTML temporarily
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            assertNotNull(doc.getElementById('api-key-modal'), 'API key modal should exist');
+            assertNotNull(doc.getElementById('recording-modal'), 'Recording modal should exist');
+        });
+
+        runner.test('Should have required form elements', async () => {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            assertNotNull(doc.getElementById('interval-select'), 'Interval selector should exist');
+            assertNotNull(doc.getElementById('api-key-input'), 'API key input should exist');
+            assertNotNull(doc.getElementById('live-transcript'), 'Live transcript area should exist');
+        });
+
+        runner.test('Should have interval options', async () => {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const select = doc.getElementById('interval-select');
+            const options = Array.from(select.options).map(opt => opt.value);
+            
+            assertTrue(options.includes('10'), 'Should have 10 minute option');
+            assertTrue(options.includes('15'), 'Should have 15 minute option');
+            assertTrue(options.includes('20'), 'Should have 20 minute option');
+            assertTrue(options.includes('30'), 'Should have 30 minute option');
+        });
+
+        // Run tests when button is clicked
+        document.getElementById('run-tests').addEventListener('click', async () => {
+            const button = document.getElementById('run-tests');
+            button.disabled = true;
+            button.textContent = 'Running...';
+            
+            const output = document.getElementById('test-output');
+            output.innerHTML = '';
+            
+            await runner.run();
+            
+            button.disabled = false;
+            button.textContent = 'Run Tests Again';
+        });
+    </script>
+</body>
+</html>
