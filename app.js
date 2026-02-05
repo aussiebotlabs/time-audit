@@ -74,7 +74,16 @@ function loadFromStorage() {
     state.interval = parseInt(localStorage.getItem(STORAGE_KEYS.INTERVAL) || '15', 10);
     
     const storedEntries = localStorage.getItem(STORAGE_KEYS.ENTRIES);
-    state.entries = storedEntries ? JSON.parse(storedEntries) : [];
+    if (storedEntries) {
+        try {
+            state.entries = JSON.parse(storedEntries);
+        } catch (e) {
+            console.error('Failed to parse stored entries, resetting to empty:', e);
+            state.entries = [];
+        }
+    } else {
+        state.entries = [];
+    }
     
     elements.intervalSelect.value = state.interval.toString();
 }
@@ -312,21 +321,43 @@ async function startRecording() {
             elements.recordingStatus.textContent = '🎤 Recording...';
             elements.recordingStatus.className = 'recording-status active';
             
-            // Send audio from microphone to Deepgram
-            const mediaRecorder = new MediaRecorder(state.audioStream, {
-                mimeType: 'audio/webm'
-            });
-            
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0 && connection.getReadyState() === 1) {
-                    connection.send(event.data);
+            try {
+                // Try supported mimeTypes in order of preference
+                const mimeTypes = ['audio/webm', 'audio/mp4', 'audio/ogg', ''];
+                let mediaRecorder;
+                
+                for (const mimeType of mimeTypes) {
+                    try {
+                        const options = mimeType ? { mimeType } : {};
+                        mediaRecorder = new MediaRecorder(state.audioStream, options);
+                        console.log('MediaRecorder created with mimeType:', mimeType || 'default');
+                        break;
+                    } catch (e) {
+                        console.warn(`mimeType ${mimeType || 'default'} not supported, trying next...`);
+                        continue;
+                    }
                 }
-            };
-            
-            mediaRecorder.start(250); // Send data every 250ms
-            
-            // Store for cleanup
-            state.mediaRecorder = mediaRecorder;
+                
+                if (!mediaRecorder) {
+                    throw new Error('No supported audio mimeType found for MediaRecorder');
+                }
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0 && connection.getReadyState() === 1) {
+                        connection.send(event.data);
+                    }
+                };
+                
+                mediaRecorder.start(250); // Send data every 250ms
+                
+                // Store for cleanup
+                state.mediaRecorder = mediaRecorder;
+            } catch (error) {
+                console.error('Failed to create MediaRecorder:', error);
+                elements.recordingStatus.textContent = 'Recording not supported in this browser';
+                elements.recordingStatus.className = 'recording-status error';
+                stopRecording();
+            }
         });
         
         connection.on(LiveTranscriptionEvents.Transcript, (data) => {
