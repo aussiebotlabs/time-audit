@@ -1,11 +1,11 @@
 // Constants and State
-export const STORAGE_KEYS = {
+const STORAGE_KEYS = {
     API_KEY: 'timeaudit_apikey',
     INTERVAL: 'timeaudit_interval',
     ENTRIES: 'timeaudit_entries'
 };
 
-export function createEntry(transcript, startTime, endTime) {
+function createEntry(transcript, startTime, endTime) {
     return {
         id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
         startTime: startTime.toISOString(),
@@ -18,7 +18,14 @@ export function createEntry(transcript, startTime, endTime) {
 let state = {
     apiKey: localStorage.getItem(STORAGE_KEYS.API_KEY) || '',
     intervalMinutes: parseInt(localStorage.getItem(STORAGE_KEYS.INTERVAL)) || 15,
-    entries: JSON.parse(localStorage.getItem(STORAGE_KEYS.ENTRIES)) || [],
+    entries: (() => {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS.ENTRIES)) || [];
+        } catch (e) {
+            console.error("Failed to parse entries:", e);
+            return [];
+        }
+    })(),
     nextPromptTime: null,
     timerId: null,
     isRecording: false,
@@ -27,42 +34,49 @@ let state = {
 };
 
 // DOM Elements
-const elements = {
-    timeLeft: document.getElementById('time-left'),
-    settingsBtn: document.getElementById('settings-btn'),
-    settingsModal: document.getElementById('settings-modal'),
-    apiKeyInput: document.getElementById('api-key'),
-    saveKeyBtn: document.getElementById('save-key-btn'),
-    intervalSelect: document.getElementById('interval-select'),
-    closeSettingsBtn: document.getElementById('close-settings-btn'),
-    
-    transcriptList: document.getElementById('transcript-list'),
-    exportBtn: document.getElementById('export-btn'),
-    
-    recordingModal: document.getElementById('recording-modal'),
-    periodTime: document.getElementById('period-time'),
-    liveTranscript: document.getElementById('live-transcript'),
-    stopRecordingBtn: document.getElementById('stop-recording-btn'),
-    cancelRecordingBtn: document.getElementById('cancel-recording-btn')
-};
+let elements = {};
 
 // --- Initialization ---
 
 function init() {
+    // Populate elements
+    elements = {
+        timeLeft: document.getElementById('time-left'),
+        settingsBtn: document.getElementById('settings-btn'),
+        settingsModal: document.getElementById('settings-modal'),
+        apiKeyInput: document.getElementById('api-key'),
+        saveKeyBtn: document.getElementById('save-key-btn'),
+        intervalSelect: document.getElementById('interval-select'),
+        closeSettingsBtn: document.getElementById('close-settings-btn'),
+        
+        transcriptList: document.getElementById('transcript-list'),
+        exportBtn: document.getElementById('export-btn'),
+        
+        recordingModal: document.getElementById('recording-modal'),
+        periodTime: document.getElementById('period-time'),
+        liveTranscript: document.getElementById('live-transcript'),
+        stopRecordingBtn: document.getElementById('stop-recording-btn'),
+        cancelRecordingBtn: document.getElementById('cancel-recording-btn')
+    };
+
     // Initial UI state
     elements.intervalSelect.value = state.intervalMinutes;
     elements.apiKeyInput.value = state.apiKey;
     renderEntries();
     
     // Event Listeners
-    elements.settingsBtn.onclick = () => showModal(elements.settingsModal);
-    elements.closeSettingsBtn.onclick = () => hideModal(elements.settingsModal);
+    elements.settingsBtn.addEventListener('click', () => {
+        console.log("Settings button clicked");
+        showModal(elements.settingsModal);
+    });
     
-    elements.saveKeyBtn.onclick = () => {
+    elements.closeSettingsBtn.addEventListener('click', () => hideModal(elements.settingsModal));
+    
+    elements.saveKeyBtn.addEventListener('click', () => {
         state.apiKey = elements.apiKeyInput.value.trim();
         localStorage.setItem(STORAGE_KEYS.API_KEY, state.apiKey);
         alert('API Key saved!');
-    };
+    });
     
     elements.intervalSelect.onchange = (e) => {
         state.intervalMinutes = parseInt(e.target.value);
@@ -70,10 +84,10 @@ function init() {
         resetTimer();
     };
     
-    elements.exportBtn.onclick = exportEntries;
+    elements.exportBtn.addEventListener('click', exportEntries);
     
-    elements.stopRecordingBtn.onclick = stopAndSaveRecording;
-    elements.cancelRecordingBtn.onclick = cancelRecording;
+    elements.stopRecordingBtn.addEventListener('click', stopAndSaveRecording);
+    elements.cancelRecordingBtn.addEventListener('click', cancelRecording);
 
     // Start timer
     resetTimer();
@@ -89,11 +103,17 @@ function init() {
 // --- Modals ---
 
 function showModal(modal) {
-    modal.classList.add('active');
+    if (modal) {
+        modal.classList.add('active');
+    } else {
+        console.error("Modal element not found");
+    }
 }
 
 function hideModal(modal) {
-    modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
 
 // --- Timer Logic ---
@@ -303,5 +323,9 @@ function exportEntries() {
     URL.revokeObjectURL(url);
 }
 
-// Initialize on load
-window.onload = init;
+// Initialize
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
