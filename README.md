@@ -138,24 +138,54 @@ The app requires microphone access to record audio. Modern browsers will prompt 
 
 ## Development
 
-### File Structure
+### Prerequisites
+- [pnpm](https://pnpm.io/) installed
 
+### Setup
+```bash
+pnpm install
 ```
-time-audit/
-├── index.html      # Main HTML structure
-├── style.css       # Styling and UI design
-├── app.js          # Core application logic
-├── test.html       # Test suite
-└── README.md       # This file
+
+### Running Tests
+```bash
+# Run unit tests (Vitest)
+pnpm test
+
+# Run unit tests in watch mode
+pnpm test:watch
+
+# Run E2E tests (Playwright)
+pnpm test:e2e
+
+# Run E2E tests with UI
+pnpm test:e2e:ui
+
+# Run all tests
+pnpm test:all
 ```
 
 ### Technologies Used
-
 - **Vanilla JavaScript**: No frameworks, just pure JS
 - **Deepgram SDK**: Loaded via CDN for speech-to-text
 - **localStorage API**: For persistent data storage
 - **MediaRecorder API**: For capturing microphone audio
 - **WebSocket**: For real-time transcription (via Deepgram SDK)
+- **Vitest**: Unit testing framework
+- **Playwright**: End-to-end testing framework
+
+### GitHub Actions
+This project uses GitHub Actions for CI. Tests are automatically run on every push to main/master and on pull requests.
+
+### File Structure
+```
+time-audit/
+├── index.html      # Main HTML structure
+├── style.css       # Styling and UI design
+├── app.js          # Core application logic
+├── tests/          # Unit tests (Vitest)
+├── e2e/            # E2E tests (Playwright)
+└── README.md       # This file
+```
 
 ## License
 

@@ -1,12 +1,12 @@
 // Storage Keys
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
     API_KEY: 'timeaudit_apikey',
     INTERVAL: 'timeaudit_interval',
     ENTRIES: 'timeaudit_entries'
 };
 
 // State
-let state = {
+export let state = {
     apiKey: null,
     interval: 15,
     entries: [],
@@ -534,11 +534,11 @@ function downloadFile(content, filename, mimeType) {
 }
 
 // Utility Functions
-function generateId() {
+export function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-function formatTime(date) {
+export function formatTime(date) {
     return date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
@@ -546,7 +546,7 @@ function formatTime(date) {
     });
 }
 
-function formatDateTime(date) {
+export function formatDateTime(date) {
     return date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -557,18 +557,26 @@ function formatDateTime(date) {
     });
 }
 
-function formatDateForFilename(date) {
+export function formatDateForFilename(date) {
     return date.toISOString().split('T')[0];
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+export function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-// Make deleteEntry available globally for onclick handlers
+// Make functions available globally for testing and onclick handlers
 window.deleteEntry = deleteEntry;
+window.showRecordingModal = showRecordingModal;
+window.startRecording = startRecording;
+window.stopRecording = stopRecording;
+window.saveTranscriptEntry = saveTranscriptEntry;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
