@@ -1,11 +1,12 @@
 # ⏰ Time Audit
 
-A privacy-focused, client-side web application that helps you track your daily activities by prompting you at configurable intervals to record what you've been doing. All data stays in your browser - no server required.
+A privacy-focused, client-side web application that helps you track your daily activities by prompting you at configurable intervals to record what you've been doing. The idea is to export and share the transcript with your favourite AI agent to gain insights into your time usage. All data stays in your browser - no server required.
 
 ## Features
 
 - **Privacy-First**: All data stored locally in your browser's localStorage
 - **Speech-to-Text**: Real-time transcription using Deepgram's API
+- **Mobile Support**: Fully supported on mobile devices
 - **Configurable Intervals**: Choose 10, 15, 20, or 30-minute check-in intervals
 - **Manual Editing**: Edit transcripts directly in the browser
 - **Export Options**: Download your activity log as JSON or text file
@@ -21,32 +22,7 @@ A privacy-focused, client-side web application that helps you track your daily a
 
 ### 2. Run the Application
 
-You have several options to run the app:
-
-#### Option A: Direct File Access
-Simply open `index.html` in your web browser. Note that microphone access may be restricted depending on your browser's security settings.
-
-#### Option B: Local Web Server (Recommended)
-
-Using Python:
-```bash
-# Python 3
-python -m http.server 8000
-
-# Then open http://localhost:8000
-```
-
-Using Node.js:
-```bash
-npx serve
-# or
-npx http-server
-```
-
-Using PHP:
-```bash
-php -S localhost:8000
-```
+Access the application directly at: [http://aussiebotlabs.github.io/time-audit](http://aussiebotlabs.github.io/time-audit)
 
 ### 3. Configure Your API Key
 
@@ -109,7 +85,7 @@ All data is stored in your browser's localStorage:
 - **Chrome/Edge**: Fully supported
 - **Firefox**: Fully supported
 - **Safari**: Fully supported (macOS 11+)
-- **Mobile**: Supported but requires HTTPS or localhost
+- **Mobile**: Fully supported (requires HTTPS or localhost for microphone access)
 
 ### Microphone Permissions
 
