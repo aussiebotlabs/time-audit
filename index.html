@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Audit - Privacy-First Voice Reporting</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Deepgram SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@deepgram/sdk"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Time Audit</h1>
+            <div id="status-bar">
+                <div id="timer-display">Next prompt: <span id="time-left">--:--</span></div>
+                <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="transcript-section">
+            <div class="section-header">
+                <h2>Transcripts</h2>
+                <button id="export-btn" class="btn secondary">Export All</button>
+            </div>
+            <div id="transcript-list">
+                <p class="empty-state">Your reporting history will appear here.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h3>Settings</h3>
+            <div class="form-group">
+                <label for="api-key">Deepgram API Key</label>
+                <div class="input-with-action">
+                    <input type="password" id="api-key" placeholder="Enter your API key">
+                    <button id="save-key-btn" class="btn">Save</button>
+                </div>
+                <p class="help-text">Your key is stored locally in your browser and never leaves your device.</p>
+            </div>
+            <div class="form-group">
+                <label for="interval-select">Check-in Interval</label>
+                <select id="interval-select">
+                    <option value="10">10 minutes</option>
+                    <option value="15" selected>15 minutes</option>
+                    <option value="20">20 minutes</option>
+                    <option value="30">30 minutes</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="close-settings-btn" class="btn secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recording Modal -->
+    <div id="recording-modal" class="modal">
+        <div class="modal-content">
+            <h3>What have you been doing?</h3>
+            <p id="reporting-period">Reporting for: <span id="period-time">--:-- - --:--</span></p>
+            
+            <div id="recording-visualizer">
+                <div class="pulse-ring"></div>
+                <div class="mic-icon">🎤</div>
+            </div>
+
+            <div id="live-transcript-container">
+                <div id="live-transcript" placeholder="Listening..."></div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="stop-recording-btn" class="btn danger">Stop & Save</button>
+                <button id="cancel-recording-btn" class="btn secondary">Discard</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
