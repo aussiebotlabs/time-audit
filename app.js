@@ -208,6 +208,13 @@ function playNotification() {
         playTone(880, now, 0.15);           // First chime
         playTone(1109, now + 0.2, 0.4);     // Second chime (slightly delayed)
         
+        // Close context after sound finishes
+        setTimeout(() => {
+            if (audioContext.state !== 'closed') {
+                audioContext.close().catch(err => console.error('Error closing AudioContext:', err));
+            }
+        }, 1000);
+        
     } catch (err) {
         console.log('Could not play notification sound:', err);
     }
@@ -253,7 +260,10 @@ function updateApiKeyDisplay() {
 
 function showRecordingModal() {
     state.currentPeriodEnd = new Date();
-    const periodStart = state.currentPeriodStart || new Date(state.currentPeriodEnd.getTime() - state.interval * 60 * 1000);
+    if (!state.currentPeriodStart) {
+        state.currentPeriodStart = new Date(state.currentPeriodEnd.getTime() - state.interval * 60 * 1000);
+    }
+    const periodStart = state.currentPeriodStart;
     
     elements.periodStart.textContent = formatTime(periodStart);
     elements.periodEnd.textContent = formatTime(state.currentPeriodEnd);

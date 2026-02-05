@@ -101,5 +101,27 @@ describe('App Logic', () => {
         expect(placeholder.length).toBeGreaterThan(0);
         expect(transcriptArea.textContent.trim()).toBe('');
     });
+
+    it('should initialize currentPeriodStart in showRecordingModal if null', () => {
+        app.state.currentPeriodStart = null;
+        app.state.interval = 15;
+        
+        // Mock current time
+        const mockNow = new Date('2026-02-05T12:00:00Z');
+        vi.useFakeTimers();
+        vi.setSystemTime(mockNow);
+        
+        // Access via window since it's not exported but assigned to window
+        window.showRecordingModal();
+        
+        expect(app.state.currentPeriodStart).not.toBeNull();
+        expect(app.state.currentPeriodStart).toBeInstanceOf(Date);
+        
+        // Expected start time is 15 minutes before 12:00:00
+        const expectedStart = new Date(mockNow.getTime() - 15 * 60 * 1000);
+        expect(app.state.currentPeriodStart.getTime()).toBe(expectedStart.getTime());
+        
+        vi.useRealTimers();
+    });
   });
 });
