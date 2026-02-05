@@ -329,6 +329,11 @@ function updateApiKeyDisplay() {
 }
 
 function showRecordingModal() {
+    // If already open, don't re-initialize to avoid data loss
+    if (elements.recordingModal.classList.contains('active')) {
+        return;
+    }
+
     state.currentPeriodEnd = new Date();
     if (!state.currentPeriodStart) {
         state.currentPeriodStart = new Date(state.currentPeriodEnd.getTime() - state.interval * 60 * 1000);

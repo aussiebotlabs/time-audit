@@ -15,15 +15,12 @@ let app;
 
 describe('App Logic', () => {
   beforeEach(async () => {
+    vi.resetModules();
     document.body.innerHTML = html;
     vi.clearAllMocks();
     localStorage.clear();
     
-    // Reset state and re-import or re-initialize if needed
-    // For now let's import it once at the top level of the suite
-    if (!app) {
-      app = await import('../app.js');
-    }
+    app = await import('../app.js');
   });
 
   describe('Utility Functions', () => {
@@ -122,6 +119,29 @@ describe('App Logic', () => {
         expect(app.state.currentPeriodStart.getTime()).toBe(expectedStart.getTime());
         
         vi.useRealTimers();
+    });
+
+    it('should not reset transcript if modal is already active', () => {
+        const transcriptArea = document.getElementById('live-transcript');
+        const recordingModal = document.getElementById('recording-modal');
+        
+        // Initial call
+        window.showRecordingModal();
+        
+        // Simulate user input
+        const userContent = 'This is my activity';
+        transcriptArea.textContent = userContent;
+        app.state.currentTranscript = userContent;
+        
+        // Modal should have active class
+        expect(recordingModal.classList.contains('active')).toBe(true);
+        
+        // Second call (e.g. from notification click)
+        window.showRecordingModal();
+        
+        // Content should be preserved
+        expect(transcriptArea.textContent).toBe(userContent);
+        expect(app.state.currentTranscript).toBe(userContent);
     });
   });
 });
