@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Audit - Track Your Activities</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@deepgram/sdk"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>⏰ Time Audit</h1>
+            <p class="subtitle">Privacy-focused activity tracking</p>
+        </header>
+
+        <!-- Settings Panel -->
+        <section class="settings-panel">
+            <div class="setting-group">
+                <label for="interval-select">Check-in Interval:</label>
+                <select id="interval-select">
+                    <option value="10">10 minutes</option>
+                    <option value="15" selected>15 minutes</option>
+                    <option value="20">20 minutes</option>
+                    <option value="30">30 minutes</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="api-key-display">API Key:</label>
+                <div class="api-key-wrapper">
+                    <input type="password" id="api-key-display" placeholder="Not set" readonly>
+                    <button id="edit-api-key-btn" class="btn-icon" title="Edit API key">✏️</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label class="switch-label" for="notification-toggle">Notifications:</label>
+                <label class="switch">
+                    <input type="checkbox" id="notification-toggle" aria-label="Enable browser notifications">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="countdown-wrapper">
+                <span class="countdown-label">Next check-in:</span>
+                <span id="countdown-display">--:--</span>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="transcript-header">
+                <h2>Activity Log</h2>
+                <div class="transcript-actions">
+                    <button id="export-json-btn" class="btn-secondary">Export JSON</button>
+                    <button id="export-text-btn" class="btn-secondary">Export Text</button>
+                    <button id="clear-all-btn" class="btn-danger">Clear All</button>
+                </div>
+            </div>
+
+            <div id="transcript-list" class="transcript-list">
+                <div class="empty-state">
+                    <p>📝 No entries yet</p>
+                    <p class="empty-subtitle">Your activity log will appear here</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- API Key Setup Modal -->
+    <div id="api-key-modal" class="modal">
+        <div class="modal-content">
+            <h2>🔑 Configure Deepgram API Key</h2>
+            <p class="modal-description">Enter your Deepgram API key to enable speech-to-text transcription. Your key is stored locally in your browser and never sent to any server except Deepgram.</p>
+            
+            <div class="form-group">
+                <label for="api-key-input">API Key:</label>
+                <input type="text" id="api-key-input" placeholder="dg-xxxxxxxxxxxxxxxxx" autocomplete="off">
+            </div>
+
+            <div class="modal-actions">
+                <button id="save-api-key-btn" class="btn-primary">Save & Continue</button>
+            </div>
+
+            <p class="modal-footer">
+                Don't have an API key? <a href="https://console.deepgram.com/signup" target="_blank" rel="noopener">Sign up at Deepgram</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Recording Modal -->
+    <div id="recording-modal" class="modal">
+        <div class="modal-content">
+            <h2>🎤 What have you been doing?</h2>
+            <p class="time-period">
+                <span id="period-start">--:--</span> - <span id="period-end">--:--</span>
+            </p>
+
+            <div class="recording-controls">
+                <button id="start-recording-btn" class="btn-primary btn-large">
+                    <span class="btn-icon">🎤</span>
+                    Start Recording
+                </button>
+                <button id="stop-recording-btn" class="btn-danger btn-large" style="display: none;">
+                    <span class="btn-icon">⏹️</span>
+                    Stop Recording
+                </button>
+            </div>
+
+            <div id="recording-status" class="recording-status"></div>
+
+            <div class="transcript-preview">
+                <label>Transcript:</label>
+                <div id="live-transcript" class="live-transcript" contenteditable="true" 
+                     data-placeholder="Click &quot;Start Recording&quot; and speak to transcribe..."></div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="save-transcript-btn" class="btn-primary">Save Entry</button>
+                <button id="cancel-recording-btn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
