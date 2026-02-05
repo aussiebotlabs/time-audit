@@ -441,7 +441,7 @@ async function startRecording() {
         });
         
         connection.on(LiveTranscriptionEvents.Transcript, (data) => {
-            const transcript = data.channel.alternatives[0].transcript;
+            const transcript = data.channel?.alternatives?.[0]?.transcript || "";
             
             if (transcript && transcript.trim().length > 0) {
                 if (data.is_final) {
