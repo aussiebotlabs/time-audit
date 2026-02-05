@@ -105,9 +105,8 @@
 
             <div class="transcript-preview">
                 <label>Transcript:</label>
-                <div id="live-transcript" class="live-transcript" contenteditable="true">
-                    Click "Start Recording" and speak to transcribe...
-                </div>
+                <div id="live-transcript" class="live-transcript" contenteditable="true" 
+                     data-placeholder="Click &quot;Start Recording&quot; and speak to transcribe..."></div>
             </div>
 
             <div class="modal-actions">
@@ -116,11 +115,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Audio notification sound (data URI) -->
-    <audio id="notification-sound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
-    </audio>
 
     <script src="app.js"></script>
 </body>

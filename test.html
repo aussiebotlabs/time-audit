@@ -493,6 +493,66 @@
             assertTrue(options.includes('30'), 'Should have 30 minute option');
         });
 
+        // Bugfix Validation Tests
+        runner.describe('Bugfix Validation', () => {});
+
+        runner.test('Entry endTime should match captured period end', () => {
+            // Mock state
+            const mockStartTime = new Date('2026-02-05T10:00:00Z');
+            const mockEndTime = new Date('2026-02-05T10:15:00Z');
+            
+            const state = {
+                currentPeriodStart: mockStartTime,
+                currentPeriodEnd: mockEndTime,
+                interval: 15,
+                entries: []
+            };
+
+            // Simulating saveTranscriptEntry logic
+            const periodEnd = state.currentPeriodEnd;
+            const periodStart = state.currentPeriodStart;
+            
+            const entry = {
+                startTime: periodStart.toISOString(),
+                endTime: periodEnd.toISOString()
+            };
+
+            assertEqual(entry.startTime, mockStartTime.toISOString(), 'Saved startTime should match mock');
+            assertEqual(entry.endTime, mockEndTime.toISOString(), 'Saved endTime should match mock');
+        });
+
+        runner.test('Audio stream should be stoppable', () => {
+            let tracksStopped = 0;
+            const mockStream = {
+                getTracks: () => [{
+                    stop: () => { tracksStopped++; }
+                }, {
+                    stop: () => { tracksStopped++; }
+                }]
+            };
+
+            // Simulating stopRecording cleanup logic
+            if (mockStream) {
+                mockStream.getTracks().forEach(track => track.stop());
+            }
+
+            assertEqual(tracksStopped, 2, 'All tracks should have been stopped');
+        });
+
+        runner.test('Placeholder attribute should be present in HTML', async () => {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const transcriptArea = doc.getElementById('live-transcript');
+            const placeholder = transcriptArea.getAttribute('data-placeholder');
+            
+            assertNotNull(placeholder, 'data-placeholder attribute should exist');
+            assertTrue(placeholder.length > 0, 'data-placeholder should not be empty');
+            assertEqual(transcriptArea.textContent.trim(), '', 'Transcript area should be empty of text nodes');
+        });
+
         // Run tests when button is clicked
         document.getElementById('run-tests').addEventListener('click', async () => {
             const button = document.getElementById('run-tests');

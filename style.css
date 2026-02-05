@@ -413,6 +413,10 @@ button {
     color: var(--primary-color);
 }
 
+.recording-status.success {
+    color: var(--success-color);
+}
+
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }

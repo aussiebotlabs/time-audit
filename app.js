@@ -50,10 +50,7 @@ const elements = {
     transcriptList: document.getElementById('transcript-list'),
     exportJsonBtn: document.getElementById('export-json-btn'),
     exportTextBtn: document.getElementById('export-text-btn'),
-    clearAllBtn: document.getElementById('clear-all-btn'),
-    
-    // Audio
-    notificationSound: document.getElementById('notification-sound')
+    clearAllBtn: document.getElementById('clear-all-btn')
 };
 
 // Initialize App
@@ -175,9 +172,33 @@ function triggerCheckIn() {
 
 function playNotification() {
     try {
-        elements.notificationSound.play().catch(err => {
-            console.log('Could not play notification sound:', err);
-        });
+        // Create a pleasant double-chime using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Helper to create a tone with envelope
+        function playTone(frequency, startTime, duration) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            // Exponential fade out envelope
+            gainNode.gain.setValueAtTime(0.15, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        }
+        
+        // Major third chime: A5 (880Hz) followed by C#6 (1109Hz)
+        const now = audioContext.currentTime;
+        playTone(880, now, 0.15);           // First chime
+        playTone(1109, now + 0.2, 0.4);     // Second chime (slightly delayed)
+        
     } catch (err) {
         console.log('Could not play notification sound:', err);
     }
@@ -262,12 +283,13 @@ async function startRecording() {
     try {
         // Request microphone access
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        state.audioStream = stream;
         
         state.isRecording = true;
         elements.startRecordingBtn.style.display = 'none';
         elements.stopRecordingBtn.style.display = 'inline-flex';
-        elements.recordingStatus.textContent = '🎤 Recording...';
-        elements.recordingStatus.className = 'recording-status active';
+        elements.recordingStatus.textContent = 'Connecting...';
+        elements.recordingStatus.className = 'recording-status processing';
         elements.liveTranscript.textContent = '';
         state.currentTranscript = '';
         
@@ -287,9 +309,11 @@ async function startRecording() {
         // Handle connection events
         connection.on(LiveTranscriptionEvents.Open, () => {
             console.log('Deepgram connection opened');
+            elements.recordingStatus.textContent = '🎤 Recording...';
+            elements.recordingStatus.className = 'recording-status active';
             
             // Send audio from microphone to Deepgram
-            const mediaRecorder = new MediaRecorder(stream, {
+            const mediaRecorder = new MediaRecorder(state.audioStream, {
                 mimeType: 'audio/webm'
             });
             
@@ -303,7 +327,6 @@ async function startRecording() {
             
             // Store for cleanup
             state.mediaRecorder = mediaRecorder;
-            state.audioStream = stream;
         });
         
         connection.on(LiveTranscriptionEvents.Transcript, (data) => {
@@ -335,6 +358,13 @@ async function startRecording() {
         console.error('Error starting recording:', error);
         alert('Failed to access microphone: ' + error.message);
         state.isRecording = false;
+        
+        // Clean up stream if it was obtained
+        if (state.audioStream) {
+            state.audioStream.getTracks().forEach(track => track.stop());
+            state.audioStream = null;
+        }
+        
         elements.startRecordingBtn.style.display = 'inline-flex';
         elements.stopRecordingBtn.style.display = 'none';
         elements.recordingStatus.textContent = '';
@@ -348,7 +378,7 @@ function stopRecording() {
     elements.startRecordingBtn.style.display = 'inline-flex';
     elements.stopRecordingBtn.style.display = 'none';
     elements.recordingStatus.textContent = '✓ Recording stopped';
-    elements.recordingStatus.className = 'recording-status';
+    elements.recordingStatus.className = 'recording-status success';
     
     // Stop media recorder
     if (state.mediaRecorder) {
@@ -380,8 +410,8 @@ function saveTranscriptEntry() {
         return;
     }
     
-    const periodEnd = state.currentPeriodEnd || new Date();
-    const periodStart = state.currentPeriodStart || new Date(periodEnd.getTime() - state.interval * 60 * 1000);
+    const periodEnd = state.currentPeriodEnd;
+    const periodStart = state.currentPeriodStart;
     
     const entry = {
         id: generateId(),
